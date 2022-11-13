@@ -1,36 +1,38 @@
 import MetaTrader5 as mt5
 from flask import Flask
 from flask import jsonify
+from flask_restful import Resource,Api
 import json
 import string
 
 app=Flask(__name__)
+api=Api(app)
 
 
-@app.route('/')
-def index():
-      return('Hello world')
+class index(Resource):
+      def get(self):
+         return('Hello world')
 
-@app.route('/mt5')
-def indexN():
-      if not mt5.initialize(login=1835579, server="Deriv-Demo",password="Valentino97#"):
-        print("initialize() failed, error code =",mt5.last_error())
-        quit()
-      pos=(mt5.account_info()._asdict())
-      mt5.shutdown()
-      return jsonify(pos)
+class indexN(Resource):
+      def get(self):
+         if not mt5.initialize(login=1835579, server="Deriv-Demo",password="Valentino97#"):
+             print("initialize() failed, error code =",mt5.last_error())
+             quit()
+         pos=(mt5.account_info()._asdict())
+         mt5.shutdown()
+         return jsonify(pos)
 
-@app.route('/pos')
-def indexP():
-      if not mt5.initialize(login=1835579, server="Deriv-Demo",password="Valentino97#"):
-        print("initialize() failed, error code =",mt5.last_error())
-        quit()
-      pos=(mt5.positions_get())
-      cc=mt5.positions_total()
-      somedict ={}
-      somelist=''
-      y=0
-      while(y<cc):
+class indexP(Resource):
+      def get(self):
+        if not mt5.initialize(login=1835579, server="Deriv-Demo",password="Valentino97#"):
+          print("initialize() failed, error code =",mt5.last_error())
+          quit()
+        pos=(mt5.positions_get())
+        cc=mt5.positions_total()
+        somedict ={}
+        somelist=''
+        y=0
+        while(y<cc):
             somedict ={ 
                    "ticket" : [ x[0] for x in pos ][y],
                    "time" : [ x[1] for x in pos ][y],
@@ -45,8 +47,12 @@ def indexP():
               }
             somelist=somelist+str(somedict)
             y=y+1
-      mt5.shutdown()
-      return jsonify(somelist)
+        mt5.shutdown()
+        return jsonify(somelist)
+
+api.add_resource(index,'/')
+api.add_resource(indexP,'/pos')
+api.add_resource(indexN,'/mt5')
 
 if __name__ == "__main__":
     app.run()
